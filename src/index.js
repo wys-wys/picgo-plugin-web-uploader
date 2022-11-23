@@ -1,17 +1,17 @@
 // const logger = require('@varnxy/logger')
-// logger.setDirectory('/Users/zhang/Work/WorkSpaces/WebWorkSpace/picgo-plugin-web-uploader/logs')
+// logger.setDirectory('/Users/zhang/Work/WorkSpaces/WebWorkSpace/picgo-plugin-web-uploader-custom-url-prefix/logs')
 // let log = logger('plugin')
 
 module.exports = (ctx) => {
   const register = () => {
-    ctx.helper.uploader.register('web-uploader', {
+    ctx.helper.uploader.register('web-uploader-custom-url-prefix', {
       handle,
-      name: '自定义Web图床',
+      name: '自定义Web图床（增加图片URL前缀）',
       config: config
     })
   }
   const handle = async function (ctx) {
-    let userConfig = ctx.getConfig('picBed.web-uploader')
+    let userConfig = ctx.getConfig('picBed.web-uploader-custom-url-prefix')
     if (!userConfig) {
       throw new Error('Can\'t find uploader config')
     }
@@ -20,6 +20,7 @@ module.exports = (ctx) => {
     const jsonPath = userConfig.jsonPath
     const customHeader = userConfig.customHeader
     const customBody = userConfig.customBody
+    const imageUrlPrefix = userConfig.imageUrlPrefix
     try {
       let imgList = ctx.output
       for (let i in imgList) {
@@ -33,7 +34,7 @@ module.exports = (ctx) => {
         delete imgList[i].base64Image
         delete imgList[i].buffer
         if (!jsonPath) {
-          imgList[i]['imgUrl'] = body
+          imgList[i]['imgUrl'] = imageUrlPrefix + body
         } else {
           body = JSON.parse(body)
           let imgUrl = body
@@ -41,7 +42,7 @@ module.exports = (ctx) => {
             imgUrl = imgUrl[field]
           }
           if (imgUrl) {
-            imgList[i]['imgUrl'] = imgUrl
+            imgList[i]['imgUrl'] = imageUrlPrefix + imgUrl
           } else {
             ctx.emit('notification', {
               title: '返回解析失败',
@@ -85,7 +86,7 @@ module.exports = (ctx) => {
   }
 
   const config = ctx => {
-    let userConfig = ctx.getConfig('picBed.web-uploader')
+    let userConfig = ctx.getConfig('picBed.web-uploader-custom-url-prefix')
     if (!userConfig) {
       userConfig = {}
     }
@@ -129,12 +130,20 @@ module.exports = (ctx) => {
         required: false,
         message: '自定义Body 标准JSON(eg: {"key":"value"})',
         alias: '自定义Body'
+      },
+      {
+        name: 'imageUrlPrefix',
+        type: 'input',
+        default: userConfig.imageUrlPrefix,
+        required: false,
+        message: '自定义图片URL前缀',
+        alias: '自定义图片URL前缀'
       }
     ]
   }
   return {
-    uploader: 'web-uploader',
-    // transformer: 'web-uploader',
+    uploader: 'web-uploader-custom-url-prefix',
+    // transformer: 'web-uploader-custom-url-prefix',
     // config: config,
     register
 
